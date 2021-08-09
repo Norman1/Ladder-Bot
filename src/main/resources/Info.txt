@@ -4,10 +4,22 @@ hostEmail=<your email>
 hostApiToken=<your API token>
 
 
+-------------------------------------------------------------------------------------
+Possible player States:
+- Won
+- SurrenderAccepted
+- Playing (also during invitation stage when having accepted the invite; also during picking stage)
+- Declined
+- Invited (has not yet accepted the invite)
+- EndedByVote
+- Booted
+
+
+
 ---------------------------------
 
 Possible game states:
-WaitingForPlayers, Finished, DistributingTerritories, Playing, Finished, Declined
+WaitingForPlayers, Finished, DistributingTerritories, Playing, Declined
 --> having 1 player decline gives the state Playing
 When a game is deleted, then the result is:
 {
@@ -117,6 +129,8 @@ POST https://sheet.best/api/sheets/a38c8090-ed6d-4bef-bbdf-79f9622803af/tabs/Ran
         "Rating": "543"
     }
 ]
+
+
 
 
 

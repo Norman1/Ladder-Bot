@@ -54,21 +54,22 @@ public class FileSystemAccess {
         return players;
     }
 
-
     public List<GameHistory> loadGames() {
         List<List<String>> gamesCsvData = loadCsv(GAMES_FILENAME);
         List<GameHistory> gameHistories = new ArrayList<>();
         for (List<String> gameCsvData : gamesCsvData) {
             GameHistory gameHistory = new GameHistory();
             gameHistory.setGameId(Integer.parseInt(gameCsvData.get(0)));
-            gameHistory.setP1Token(gameCsvData.get(1));
-            gameHistory.setP2Token(gameCsvData.get(2));
-            gameHistory.setState(gameCsvData.get(3));
+            gameHistory.setCreationDate(gameCsvData.get(1));
+            gameHistory.setP1Token(gameCsvData.get(2));
+            gameHistory.setP2Token(gameCsvData.get(3));
+            gameHistory.setState(gameCsvData.get(4));
+            gameHistory.setP1State(gameCsvData.get(5));
+            gameHistory.setP2State(gameCsvData.get(6));
             gameHistories.add(gameHistory);
         }
         return gameHistories;
     }
-
 
     public List<Template> loadTemplates() {
         List<List<String>> templatesCsvData = loadCsv(TEMPLATE_FILENAME);
@@ -85,10 +86,17 @@ public class FileSystemAccess {
     }
 
     public void replaceGames(List<GameHistory> games) {
-        List<String> headers = List.of("gameId", "p1Token", "p2Token", "state");
+        List<String> headers = List.of("gameId", "creationDate", "p1Token", "p2Token", "state", "p1State", "p2state");
         List<List<String>> data = new ArrayList<>();
         for (GameHistory game : games) {
-            data.add(List.of(Integer.toString(game.getGameId()), game.getP1Token(), game.getP2Token(), game.getState()));
+            data.add(List.of(Integer.toString(game.getGameId()),
+                    game.getCreationDate(),
+                    game.getP1Token(),
+                    game.getP2Token(),
+                    game.getState(),
+                    game.getP1State(),
+                    game.getP2State()
+            ));
         }
         replaceCsv(GAMES_FILENAME, headers, data);
     }

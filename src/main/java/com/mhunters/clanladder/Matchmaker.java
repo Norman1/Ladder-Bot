@@ -57,14 +57,19 @@ public class Matchmaker {
     public void updateGameStates() {
         List<GameHistory> allGames = fileSystemAccess.loadGames();
         for (GameHistory gameHistory : allGames) {
-            boolean isGameOngoing = gameHistory.getState().equals("WaitingForPlayers")
-                    || gameHistory.getState().equals("DistributingTerritories")
-                    || gameHistory.getState().equals("Playing");
-            if (!isGameOngoing) {
-                continue;
-            }
+            // TODO erroneous condition
+//            boolean isGameOngoing = gameHistory.getState().equals("WaitingForPlayers")
+//                    || gameHistory.getState().equals("DistributingTerritories")
+//                    || gameHistory.getState().equals("Playing");
+//            if (!isGameOngoing) {
+//                continue;
+//            }
             GameQueryResponse gameQueryResponse = warzoneAccess.readGame(gameHistory.getGameId(), hostEmail, hostApiToken);
             gameHistory.setState(gameQueryResponse.getState());
+            gameHistory.setCreationDate(gameQueryResponse.getCreated());
+            List<GameQueryResponse.GamePlayerQueryResponse> players = gameQueryResponse.getPlayers();
+            gameHistory.setP1State(players.stream().filter(p -> p.getId().equals(gameHistory.getP1Token())).findAny().get().getState());
+            gameHistory.setP2State(players.stream().filter(p -> p.getId().equals(gameHistory.getP2Token())).findAny().get().getState());
         }
         fileSystemAccess.replaceGames(allGames);
     }
