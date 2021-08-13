@@ -16,6 +16,5 @@ public class MatchmakerTest {
     void executeProcessTest() {
         matchmaker.executeProcess();
     }
-    
 
 }

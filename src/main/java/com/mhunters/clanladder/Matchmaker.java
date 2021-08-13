@@ -5,6 +5,7 @@ import com.mhunters.clanladder.external.WarzoneAccess;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,6 @@ import java.util.stream.Collectors;
 public class Matchmaker {
 
     private static final String GAME_NAME = "M'Hunters Auto Game";
-    private static final String PERSONAL_MESSAGE = "This game was automatically created. Please visit our Discord to see more. Please do not boot your opponent. It has practice settings and autoboot is turned off. Have fun and discuss strategy :)";
     private static final String TEAM = "None";
 
 
@@ -33,11 +33,13 @@ public class Matchmaker {
     @Value("${hostApiToken}")
     private String hostApiToken;
 
-
     /**
-     * This is the main method to trigger the whole matchmaking process.
+     * This is the main method to trigger the whole matchmaking process. It automatically triggers once per day
+     * at 10pm.
      */
+    @Scheduled(cron = "0 0 22 * * *")
     public void executeProcess() {
+        log.info("Called executeProcess");
         /*
          * Step 1: Load all data
          * Step 2: Create new matches
