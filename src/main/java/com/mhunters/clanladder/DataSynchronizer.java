@@ -6,6 +6,7 @@ import com.mhunters.clanladder.external.FileSystemAccess;
 import com.mhunters.clanladder.external.WarzoneAccess;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
  * No other class is allowed to contain any information regarding the way the data is stored.
  */
 @Service
+@Slf4j
 public class DataSynchronizer {
 
     private static final int MAX_DAYS_IN_LOBBY = 2;
@@ -61,7 +64,7 @@ public class DataSynchronizer {
     private String hostApiToken;
 
     private enum GameState {
-        LOBBY_OK, LOBBY_DEAD_OR_OUTDATED, ONGOING, FINISHED
+        LOBBY_OK, LOBBY_DEAD_OR_OUTDATED, ONGOING, FINISHED, NOT_FINDABLE
     }
 
 
@@ -138,6 +141,10 @@ public class DataSynchronizer {
         for (GameHistory gameHistory : nonHistoricGames) {
             GameHistory warzoneUpdatedGameHistory = queryWarzoneGame(gameHistory.getGameId());
             GameState gameState = getGameState(warzoneUpdatedGameHistory);
+            // We do not handle that game so it will just automatically disappear after writing the ongoing games back.
+            if (gameState == GameState.NOT_FINDABLE) {
+                continue;
+            }
             if (gameState == GameState.LOBBY_OK || gameState == GameState.ONGOING) {
                 ongoingGames.add(warzoneUpdatedGameHistory);
             } else if (gameState == GameState.FINISHED) {
@@ -157,7 +164,9 @@ public class DataSynchronizer {
 
     private GameState getGameState(GameHistory gameHistory) {
         String gameState = gameHistory.getState();
-
+        if (gameState == null) {
+            return GameState.NOT_FINDABLE;
+        }
         if (gameState.equals("Finished")) {
             return GameState.FINISHED;
         }
@@ -179,8 +188,12 @@ public class DataSynchronizer {
 
     private GameHistory queryWarzoneGame(int gameId) {
         GameQueryResponse gameQueryResponse = warzoneAccess.readGame(gameId, hostEmail, hostApiToken);
+        // state = null when the game is deleted
         GameHistory gameHistory = new GameHistory();
         gameHistory.setGameId(gameId);
+        if (gameQueryResponse.getState() == null) {
+            return gameHistory;
+        }
         gameHistory.setState(gameQueryResponse.getState());
         gameHistory.setCreationDate(DateUtils.parseDate(gameQueryResponse.getCreated()));
         List<GameQueryResponse.GamePlayerQueryResponse> players = gameQueryResponse.getPlayers();
@@ -191,17 +204,26 @@ public class DataSynchronizer {
         return gameHistory;
     }
 
-    
+
     // Step 3
     private void synchronizePlayers() {
         allPlayers = fileSystemAccess.loadPlayers();
+
         for (GameHistory ongoingGame : ongoingGames) {
-            Player player1 = allPlayers.stream().filter(p -> ongoingGame.getP1Token().equals(p.getInviteToken())).findAny().get();
-            Player player2 = allPlayers.stream().filter(p -> ongoingGame.getP2Token().equals(p.getInviteToken())).findAny().get();
-            player1.setCurrentGameCount(player1.getCurrentGameCount() + 1);
-            player2.setCurrentGameCount(player2.getCurrentGameCount() + 1);
+            Optional<Player> player1Optional = allPlayers.stream().filter(p -> ongoingGame.getP1Token().equals(p.getInviteToken())).findAny();
+            Optional<Player> player2Optional = allPlayers.stream().filter(p -> ongoingGame.getP2Token().equals(p.getInviteToken())).findAny();
+            List<Optional<Player>> playersOptional = List.of(player1Optional, player2Optional);
+            for (Optional<Player> playerOptional : playersOptional) {
+                if (playerOptional.isPresent()) {
+                    Player player = playerOptional.get();
+                    player.setCurrentGameCount(player.getCurrentGameCount() + 1);
+                } else {
+                    log.debug("Found non existent player in the following game: " + ongoingGame);
+                }
+            }
         }
     }
+
 
     // Step 4
     private void updateEloRatings() {

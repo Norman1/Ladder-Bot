@@ -3,14 +3,17 @@ package com.mhunters.clanladder.elo;
 import com.mhunters.clanladder.DataSynchronizer;
 import com.mhunters.clanladder.data.GameHistory;
 import com.mhunters.clanladder.data.Player;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
+@Slf4j
 public class EloUpdater {
 
     @Autowired
@@ -30,9 +33,15 @@ public class EloUpdater {
         allConsideredGames.addAll(newlyFinishedGames);
         allConsideredGames.addAll(deadOrOutdatedGames);
         for (GameHistory game : allConsideredGames) {
-            Player p1 = players.stream().filter(p -> p.getInviteToken().equals(game.getP1Token())).findAny().get();
-            Player p2 = players.stream().filter(p -> p.getInviteToken().equals(game.getP2Token())).findAny().get();
+            Optional<Player> p1Optional = players.stream().filter(p -> p.getInviteToken().equals(game.getP1Token())).findAny();
+            Optional<Player> p2Optional = players.stream().filter(p -> p.getInviteToken().equals(game.getP2Token())).findAny();
+            if (!p1Optional.isPresent() || !p2Optional.isPresent()) {
+                log.debug("Found non existent player in the following game: " + game);
+                continue;
+            }
 
+            Player p1 = p1Optional.get();
+            Player p2 = p2Optional.get();
             WinState p1WinState = calculateWinState(game);
             int p1Rating = p1.getElo();
             int p2Rating = p2.getElo();

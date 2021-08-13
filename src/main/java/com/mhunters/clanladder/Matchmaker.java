@@ -2,6 +2,7 @@ package com.mhunters.clanladder;
 
 import com.mhunters.clanladder.data.*;
 import com.mhunters.clanladder.external.WarzoneAccess;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,11 +14,13 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class Matchmaker {
 
     private static final String GAME_NAME = "M'Hunters Auto Game";
     private static final String PERSONAL_MESSAGE = "This game was automatically created. Please visit our Discord to see more. Please do not boot your opponent. It has practice settings and autoboot is turned off. Have fun and discuss strategy :)";
     private static final String TEAM = "None";
+
 
     @Autowired
     private WarzoneAccess warzoneAccess;
@@ -53,6 +56,11 @@ public class Matchmaker {
         List<GameHistory> createdGames = new ArrayList<>();
         for (GameCreationRequest gameCreationRequest : gameCreationRequests) {
             GameCreationResponse gameCreationResponse = warzoneAccess.createGame(gameCreationRequest);
+            // The game could not get created
+            if (gameCreationResponse.getGameId() == 0) {
+                log.warn("Failed game creation: " + gameCreationRequest);
+                continue;
+            }
             GameHistory gameHistory = new GameHistory();
             gameHistory.setGameId(gameCreationResponse.getGameId());
             gameHistory.setCreationDate(LocalDateTime.now());

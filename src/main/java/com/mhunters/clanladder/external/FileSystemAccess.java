@@ -43,16 +43,6 @@ public class FileSystemAccess {
             player.setElo(Integer.parseInt(playerCsvData.get(3)));
             players.add(player);
         }
-
-//        List<GameHistory> allPlayedGames = loadGames();
-//        List<GameHistory> ongoingGames = allPlayedGames.stream().filter(g -> g.getState().equals("WaitingForPlayers")
-//                || g.getState().equals("DistributingTerritories") || g.getState().equals("Playing")).collect(Collectors.toList());
-//        for (GameHistory ongoingGame : ongoingGames) {
-//            Player player1 = players.stream().filter(p -> ongoingGame.getP1Token().equals(p.getInviteToken())).findAny().get();
-//            Player player2 = players.stream().filter(p -> ongoingGame.getP2Token().equals(p.getInviteToken())).findAny().get();
-//            player1.setCurrentGameCount(player1.getCurrentGameCount() + 1);
-//            player2.setCurrentGameCount(player2.getCurrentGameCount() + 1);
-//        }
         return players;
     }
 
@@ -152,9 +142,7 @@ public class FileSystemAccess {
             fw.flush();
             csvPrinter.flush();
         }
-
     }
-
 
     @SneakyThrows(value = IOException.class)
     private List<List<String>> loadCsv(String fileName) {
@@ -176,5 +164,4 @@ public class FileSystemAccess {
             csvParser.close();
         }
     }
-
 }
