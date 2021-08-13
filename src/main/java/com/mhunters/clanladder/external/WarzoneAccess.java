@@ -1,8 +1,6 @@
 package com.mhunters.clanladder.external;
 
-import com.mhunters.clanladder.data.GameCreationRequest;
-import com.mhunters.clanladder.data.GameCreationResponse;
-import com.mhunters.clanladder.data.GameQueryResponse;
+import com.mhunters.clanladder.data.*;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -16,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 public class WarzoneAccess {
 
     private static final String CREATE_GAME_ENDPOINT = "https://www.warzone.com/API/CreateGame";
+    private static final String DELETE_GAME_ENDPOINT = "https://www.warzone.com/API/DeleteLobbyGame";
+
 
     public GameCreationResponse createGame(GameCreationRequest gameCreationRequest) {
         RestTemplate restTemplate = new RestTemplate();
@@ -39,6 +39,13 @@ public class WarzoneAccess {
                 entity,
                 GameQueryResponse.class);
         return response.getBody();
+    }
+
+    public DeleteGameResponse deleteGame(GameDeletionRequest gameDeletionRequest) {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<DeleteGameResponse> response = restTemplate.postForEntity(DELETE_GAME_ENDPOINT, gameDeletionRequest, DeleteGameResponse.class);
+        return response.getBody();
+
     }
 
 

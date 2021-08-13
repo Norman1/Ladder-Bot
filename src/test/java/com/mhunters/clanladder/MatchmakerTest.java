@@ -12,14 +12,10 @@ public class MatchmakerTest {
     private Matchmaker matchmaker;
 
     @Test
-    @DisplayName("Debug test to execute the matchmaking from here.")
-    void executeMatchmakingTest() {
-        matchmaker.executeMatchmaking();
+    @DisplayName("Debug test to execute the cronjob manually")
+    void executeProcessTest() {
+        matchmaker.executeProcess();
     }
-
-    @Test
-    void updateGameStatesTest() {
-        matchmaker.updateGameStates();
-    }
+    
 
 }

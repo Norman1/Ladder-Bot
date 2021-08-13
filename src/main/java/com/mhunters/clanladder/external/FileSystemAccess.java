@@ -1,5 +1,6 @@
 package com.mhunters.clanladder.external;
 
+import com.mhunters.clanladder.DateUtils;
 import com.mhunters.clanladder.data.GameHistory;
 import com.mhunters.clanladder.data.Player;
 import com.mhunters.clanladder.data.Template;
@@ -15,9 +16,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This class encapsulates the file system access.
@@ -29,7 +30,7 @@ public class FileSystemAccess {
     private static final String TEMPLATE_FILENAME = "Templates.csv";
     private static final String GAMES_FILENAME = "Games.csv";
     private static final String PLAYERBASE_FILENAME = "Playerbase.csv";
-    private static final String RANKINGS_FILENAME = "Rankings.csv";
+    private static final String METADATA_FILENAME = "Metadata.csv";
 
     public List<Player> loadPlayers() {
         List<List<String>> playersCsvData = loadCsv(PLAYERBASE_FILENAME);
@@ -39,18 +40,19 @@ public class FileSystemAccess {
             player.setName(playerCsvData.get(0));
             player.setInviteToken(playerCsvData.get(1));
             player.setMaxGames(Integer.parseInt(playerCsvData.get(2)));
+            player.setElo(Integer.parseInt(playerCsvData.get(3)));
             players.add(player);
         }
 
-        List<GameHistory> allPlayedGames = loadGames();
-        List<GameHistory> ongoingGames = allPlayedGames.stream().filter(g -> g.getState().equals("WaitingForPlayers")
-                || g.getState().equals("DistributingTerritories") || g.getState().equals("Playing")).collect(Collectors.toList());
-        for (GameHistory ongoingGame : ongoingGames) {
-            Player player1 = players.stream().filter(p -> ongoingGame.getP1Token().equals(p.getInviteToken())).findAny().get();
-            Player player2 = players.stream().filter(p -> ongoingGame.getP2Token().equals(p.getInviteToken())).findAny().get();
-            player1.setCurrentGameCount(player1.getCurrentGameCount() + 1);
-            player2.setCurrentGameCount(player2.getCurrentGameCount() + 1);
-        }
+//        List<GameHistory> allPlayedGames = loadGames();
+//        List<GameHistory> ongoingGames = allPlayedGames.stream().filter(g -> g.getState().equals("WaitingForPlayers")
+//                || g.getState().equals("DistributingTerritories") || g.getState().equals("Playing")).collect(Collectors.toList());
+//        for (GameHistory ongoingGame : ongoingGames) {
+//            Player player1 = players.stream().filter(p -> ongoingGame.getP1Token().equals(p.getInviteToken())).findAny().get();
+//            Player player2 = players.stream().filter(p -> ongoingGame.getP2Token().equals(p.getInviteToken())).findAny().get();
+//            player1.setCurrentGameCount(player1.getCurrentGameCount() + 1);
+//            player2.setCurrentGameCount(player2.getCurrentGameCount() + 1);
+//        }
         return players;
     }
 
@@ -60,7 +62,7 @@ public class FileSystemAccess {
         for (List<String> gameCsvData : gamesCsvData) {
             GameHistory gameHistory = new GameHistory();
             gameHistory.setGameId(Integer.parseInt(gameCsvData.get(0)));
-            gameHistory.setCreationDate(gameCsvData.get(1));
+            gameHistory.setCreationDate(DateUtils.parseDate(gameCsvData.get(1)));
             gameHistory.setP1Token(gameCsvData.get(2));
             gameHistory.setP2Token(gameCsvData.get(3));
             gameHistory.setState(gameCsvData.get(4));
@@ -85,21 +87,38 @@ public class FileSystemAccess {
         return templates;
     }
 
+    public LocalDateTime getMetadata() {
+        List<List<String>> metadataCsvData = loadCsv(METADATA_FILENAME);
+        return DateUtils.parseDate(metadataCsvData.get(0).get(0));
+    }
+
     public void replaceGames(List<GameHistory> games) {
         List<String> headers = List.of("gameId", "creationDate", "p1Token", "p2Token", "state", "p1State", "p2state");
         List<List<String>> data = new ArrayList<>();
         for (GameHistory game : games) {
             data.add(List.of(Integer.toString(game.getGameId()),
-                    game.getCreationDate(),
+                    DateUtils.format(game.getCreationDate()),
                     game.getP1Token(),
                     game.getP2Token(),
                     game.getState(),
                     game.getP1State(),
-                    game.getP2State()
-            ));
+                    game.getP2State()));
         }
         replaceCsv(GAMES_FILENAME, headers, data);
     }
+
+    public void replacePlayers(List<Player> players) {
+        List<String> headers = List.of("Name", "InviteToken", "MaxGames", "Elo");
+        List<List<String>> data = new ArrayList<>();
+        for (Player player : players) {
+            data.add(List.of(player.getName(),
+                    player.getInviteToken(),
+                    Integer.toString(player.getMaxGames()),
+                    Integer.toString(player.getElo())));
+        }
+        replaceCsv(PLAYERBASE_FILENAME, headers, data);
+    }
+
 
     public void replaceTemplates(List<Template> templates) {
         List<String> headers = List.of("Name", "Link");
@@ -108,6 +127,13 @@ public class FileSystemAccess {
             data.add(List.of(template.getName(), template.getLink()));
         }
         replaceCsv(TEMPLATE_FILENAME, headers, data);
+    }
+
+    public void replaceMetadata(String now) {
+        List<String> headers = List.of("lastRun");
+        List<List<String>> data = new ArrayList<>();
+        data.add(List.of(now));
+        replaceCsv(METADATA_FILENAME, headers, data);
     }
 
 

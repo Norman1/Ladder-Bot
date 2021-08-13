@@ -9,5 +9,6 @@ public class ClanladderApplication {
     public static void main(String[] args) {
         SpringApplication.run(ClanladderApplication.class, args);
     }
+    
 
 }

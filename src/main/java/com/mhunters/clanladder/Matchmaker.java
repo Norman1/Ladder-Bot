@@ -1,12 +1,12 @@
 package com.mhunters.clanladder;
 
 import com.mhunters.clanladder.data.*;
-import com.mhunters.clanladder.external.FileSystemAccess;
 import com.mhunters.clanladder.external.WarzoneAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -23,20 +23,31 @@ public class Matchmaker {
     private WarzoneAccess warzoneAccess;
 
     @Autowired
-    private FileSystemAccess fileSystemAccess;
+    private DataSynchronizer dataSynchronizer;
 
     @Value("${hostEmail}")
     private String hostEmail;
     @Value("${hostApiToken}")
     private String hostApiToken;
 
+
     /**
      * This is the main method to trigger the whole matchmaking process.
      */
-    public void executeMatchmaking() {
-        updateGameStates();
-        List<Player> players = fileSystemAccess.loadPlayers();
-        List<Template> templates = fileSystemAccess.loadTemplates();
+    public void executeProcess() {
+        /*
+         * Step 1: Load all data
+         * Step 2: Create new matches
+         * Step 3: update all data at end
+         */
+        dataSynchronizer.loadStartState();
+        executeMatchMaking();
+        dataSynchronizer.updateAtEnd();
+    }
+
+    private void executeMatchMaking() {
+        List<Player> players = dataSynchronizer.getAllPlayers();
+        List<Template> templates = dataSynchronizer.getAllTemplates();
         List<GameAssignment> gameAssignments = assignGames(players, templates);
         List<GameCreationRequest> gameCreationRequests = createGameCreationRequests(gameAssignments);
         List<GameHistory> createdGames = new ArrayList<>();
@@ -44,36 +55,16 @@ public class Matchmaker {
             GameCreationResponse gameCreationResponse = warzoneAccess.createGame(gameCreationRequest);
             GameHistory gameHistory = new GameHistory();
             gameHistory.setGameId(gameCreationResponse.getGameId());
+            gameHistory.setCreationDate(LocalDateTime.now());
             gameHistory.setP1Token(gameCreationRequest.getPlayers().get(0).getToken());
             gameHistory.setP2Token(gameCreationRequest.getPlayers().get(1).getToken());
             gameHistory.setState("WaitingForPlayers");
+            gameHistory.setP1State("Invited");
+            gameHistory.setP2State("Invited");
             createdGames.add(gameHistory);
         }
-        List<GameHistory> allGames = fileSystemAccess.loadGames();
-        allGames.addAll(createdGames);
-        fileSystemAccess.replaceGames(allGames);
+        dataSynchronizer.setNewlyCreatedGames(createdGames);
     }
-
-    public void updateGameStates() {
-        List<GameHistory> allGames = fileSystemAccess.loadGames();
-        for (GameHistory gameHistory : allGames) {
-            // TODO erroneous condition
-//            boolean isGameOngoing = gameHistory.getState().equals("WaitingForPlayers")
-//                    || gameHistory.getState().equals("DistributingTerritories")
-//                    || gameHistory.getState().equals("Playing");
-//            if (!isGameOngoing) {
-//                continue;
-//            }
-            GameQueryResponse gameQueryResponse = warzoneAccess.readGame(gameHistory.getGameId(), hostEmail, hostApiToken);
-            gameHistory.setState(gameQueryResponse.getState());
-            gameHistory.setCreationDate(gameQueryResponse.getCreated());
-            List<GameQueryResponse.GamePlayerQueryResponse> players = gameQueryResponse.getPlayers();
-            gameHistory.setP1State(players.stream().filter(p -> p.getId().equals(gameHistory.getP1Token())).findAny().get().getState());
-            gameHistory.setP2State(players.stream().filter(p -> p.getId().equals(gameHistory.getP2Token())).findAny().get().getState());
-        }
-        fileSystemAccess.replaceGames(allGames);
-    }
-
 
     private List<GameCreationRequest> createGameCreationRequests(List<GameAssignment> gameAssignments) {
         List<GameCreationRequest> gameCreationRequests = new ArrayList<>();
@@ -83,7 +74,7 @@ public class Matchmaker {
             gameCreationRequest.setHostApiToken(hostApiToken);
             gameCreationRequest.setTemplateId(gameAssignment.getTemplateId());
             gameCreationRequest.setGameName(GAME_NAME);
-            gameCreationRequest.setPersonalMessage(PERSONAL_MESSAGE);
+            gameCreationRequest.setPersonalMessage(generatePersonalMessage(gameAssignment));
             GameCreationRequest.Player p1 = new GameCreationRequest.Player(gameAssignment.getPlayer1Token(), TEAM);
             GameCreationRequest.Player p2 = new GameCreationRequest.Player(gameAssignment.getPlayer2Token(), TEAM);
             gameCreationRequest.setPlayers(List.of(p1, p2));
@@ -91,6 +82,21 @@ public class Matchmaker {
         }
         return gameCreationRequests;
     }
+
+    private String generatePersonalMessage(GameAssignment gameAssignment) {
+        List<Player> players = dataSynchronizer.getAllPlayers().stream().
+                filter(p -> gameAssignment.getPlayer1Token().equals(p.getInviteToken()) ||
+                        gameAssignment.getPlayer2Token().equals(p.getInviteToken())).collect(Collectors.toList());
+        Player contender1 = players.get(0);
+        Player contender2 = players.get(1);
+        String out = "This game is part of the M'Hunters internal ladder.\n";
+        int rankP1 = players.indexOf(contender1) + 1;
+        int rankP2 = players.indexOf(contender2) + 1;
+        out += "Contender 1: " + contender1.getName() + " (Rank " + rankP1 + " with a rating of " + contender1.getElo() + ")\n";
+        out += "Contender 2: " + contender2.getName() + " (Rank " + rankP2 + " with a rating of " + contender2.getElo() + ")";
+        return out;
+    }
+
 
     private List<GameAssignment> assignGames(List<Player> players, List<Template> templates) {
         List<GameAssignment> gameAssignments = new ArrayList<>();

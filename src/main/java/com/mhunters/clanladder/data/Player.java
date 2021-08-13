@@ -11,6 +11,7 @@ public class Player {
     private String name;
     private String inviteToken;
     private int maxGames;
+    private int elo;
     private int currentGameCount;
     private int newlyAssignedGames;
 }
