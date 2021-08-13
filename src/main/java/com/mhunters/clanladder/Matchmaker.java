@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -97,11 +98,15 @@ public class Matchmaker {
         List<Player> players = dataSynchronizer.getAllPlayers().stream().
                 filter(p -> gameAssignment.getPlayer1Token().equals(p.getInviteToken()) ||
                         gameAssignment.getPlayer2Token().equals(p.getInviteToken())).collect(Collectors.toList());
+
+        List<Player> allPlayingPlayers = dataSynchronizer.getAllPlayers().stream().filter(p -> p.getMaxGames() > 0).collect(Collectors.toList());
+        Collections.sort(allPlayingPlayers, (p1, p2) -> p2.getElo() - p1.getElo());
+
         Player contender1 = players.get(0);
         Player contender2 = players.get(1);
         String out = "This game is part of the M'Hunters internal ladder.\n";
-        int rankP1 = players.indexOf(contender1) + 1;
-        int rankP2 = players.indexOf(contender2) + 1;
+        int rankP1 = allPlayingPlayers.indexOf(contender1) + 1;
+        int rankP2 = allPlayingPlayers.indexOf(contender2) + 1;
         out += "Contender 1: " + contender1.getName() + " (Rank " + rankP1 + " with a rating of " + contender1.getElo() + ")\n";
         out += "Contender 2: " + contender2.getName() + " (Rank " + rankP2 + " with a rating of " + contender2.getElo() + ")";
         return out;

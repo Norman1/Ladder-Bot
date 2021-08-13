@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class EloCalculator {
 
-    private static final int K_FACTOR = 100;
+    private static final int K_FACTOR = 40;
 
 
     public int calculateNewEloRating(double ownRating, double opponentRating, boolean isVictory) {

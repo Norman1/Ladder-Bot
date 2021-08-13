@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DataSynchronizer {
 
-    private static final int MAX_DAYS_IN_LOBBY = 2;
+    private static final int MAX_DAYS_IN_LOBBY = 1;
 
     @Getter
     private List<Template> allTemplates;
@@ -58,6 +58,9 @@ public class DataSynchronizer {
     @Autowired
     private EloUpdater eloUpdater;
 
+    @Autowired
+    private GoogleSheetSynchronization googleSheetSynchronization;
+
     @Value("${hostEmail}")
     private String hostEmail;
     @Value("${hostApiToken}")
@@ -69,60 +72,46 @@ public class DataSynchronizer {
 
 
     /**
-     * Writes the new state after everything is done back to the file system and updates the Google Sheet accordingly.
-     */
-    public void updateAtEnd() {
-        /*
-         * - Tell Warzone to delete all dead games.
-         * - Collect all non dead games and write them to the file system. We do not write historic games currently.
-         * - Write the players back to the file system.
-         * - Write the templates back to the file system.
-         */
-        deleteDeadGames();
-        writeGamesBackToFileSystem();
-        writePlayersBackToFileSystem();
-        writeTemplatesBackToFileSystem();
-    }
-
-    private void deleteDeadGames() {
-        for (GameHistory deadGame : deadOrOutdatedGames) {
-            GameDeletionRequest gdr = new GameDeletionRequest(hostEmail, hostApiToken, deadGame.getGameId());
-            warzoneAccess.deleteGame(gdr);
-        }
-    }
-
-    private void writeGamesBackToFileSystem() {
-        List<GameHistory> gamesToKeepSaved = new ArrayList<>();
-        gamesToKeepSaved.addAll(ongoingGames);
-        gamesToKeepSaved.addAll(newlyCreatedGames);
-        fileSystemAccess.replaceGames(gamesToKeepSaved);
-    }
-
-    private void writePlayersBackToFileSystem() {
-        fileSystemAccess.replacePlayers(allPlayers);
-    }
-
-    private void writeTemplatesBackToFileSystem() {
-        // not used yet
-    }
-
-
-    /**
      * Loads the data from the file system and synchronizes potentially outdated data by calling the Warzone API to get the new game states.
      * This function does not write data back into the file system.
      */
     public void loadStartState() {
         /*
-         * Step 1: Load the templates from the file system. Might or might not call the Google Sheet to synchronize.
-         * Step 2: Load the games from the file system. Check the state of the ongoing games and update the information accordingly.
-         * Step 3: Load the players from the file system and inject the information regarding their ongoing games.
-         * Step 4: Update the players Elo ratings
+         * Step 1: Synchronize the file system data with Google Sheets.
+         * Step 2: Load the templates from the file system.
+         * Step 3: Load the games from the file system. Check the state of the ongoing games and update the information accordingly.
+         * Step 4: Load the players from the file system and inject the information regarding their ongoing games.
+         * Step 5: Update the players Elo ratings.
+         * Step 6: Write the rankings back to the Google Sheet.
          */
+        googleSheetSynchronization.synchronizeFileSystemData();
         synchronizeTemplates();
         synchronizeGames();
         synchronizePlayers();
         updateEloRatings();
+        googleSheetSynchronization.synchronizeGoogleSheet();
     }
+
+
+    /**
+     * Writes the new state after everything is done back to the file system and updates the Google Sheet accordingly.
+     */
+    public void updateAtEnd() {
+        /*
+         * 1:
+         * - Tell Warzone to delete all dead games.
+         * - Collect all non dead games and write them to the file system. We do not write historic games currently.
+         * - Write the players back to the file system.
+         * - Write the templates back to the file system.
+         * 2:
+         * - Update the Google Sheet rankings
+         */
+        deleteDeadGames();
+        writeGamesBackToFileSystem();
+        writePlayersBackToFileSystem();
+
+    }
+
 
     // Step 1
     private void synchronizeTemplates() {
@@ -229,5 +218,24 @@ public class DataSynchronizer {
     private void updateEloRatings() {
         eloUpdater.updateEloRankings();
     }
+
+    private void deleteDeadGames() {
+        for (GameHistory deadGame : deadOrOutdatedGames) {
+            GameDeletionRequest gdr = new GameDeletionRequest(hostEmail, hostApiToken, deadGame.getGameId());
+            warzoneAccess.deleteGame(gdr);
+        }
+    }
+
+    private void writeGamesBackToFileSystem() {
+        List<GameHistory> gamesToKeepSaved = new ArrayList<>();
+        gamesToKeepSaved.addAll(ongoingGames);
+        gamesToKeepSaved.addAll(newlyCreatedGames);
+        fileSystemAccess.replaceGames(gamesToKeepSaved);
+    }
+
+    private void writePlayersBackToFileSystem() {
+        fileSystemAccess.replacePlayers(allPlayers);
+    }
+
 
 }
