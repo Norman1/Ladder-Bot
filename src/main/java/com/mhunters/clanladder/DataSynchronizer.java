@@ -82,14 +82,12 @@ public class DataSynchronizer {
          * Step 3: Load the games from the file system. Check the state of the ongoing games and update the information accordingly.
          * Step 4: Load the players from the file system and inject the information regarding their ongoing games.
          * Step 5: Update the players Elo ratings.
-         * Step 6: Write the rankings back to the Google Sheet.
          */
         googleSheetSynchronization.synchronizeFileSystemData();
         synchronizeTemplates();
         synchronizeGames();
         synchronizePlayers();
         updateEloRatings();
-        googleSheetSynchronization.synchronizeGoogleSheet();
     }
 
 
@@ -109,7 +107,8 @@ public class DataSynchronizer {
         deleteDeadGames();
         writeGamesBackToFileSystem();
         writePlayersBackToFileSystem();
-
+        
+        googleSheetSynchronization.synchronizeGoogleSheet();
     }
 
 
