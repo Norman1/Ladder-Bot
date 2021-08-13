@@ -16,7 +16,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +29,6 @@ public class FileSystemAccess {
     private static final String TEMPLATE_FILENAME = "Templates.csv";
     private static final String GAMES_FILENAME = "Games.csv";
     private static final String PLAYERBASE_FILENAME = "Playerbase.csv";
-    private static final String METADATA_FILENAME = "Metadata.csv";
 
     public List<Player> loadPlayers() {
         List<List<String>> playersCsvData = loadCsv(PLAYERBASE_FILENAME);
@@ -77,10 +75,6 @@ public class FileSystemAccess {
         return templates;
     }
 
-    public LocalDateTime getMetadata() {
-        List<List<String>> metadataCsvData = loadCsv(METADATA_FILENAME);
-        return DateUtils.parseDate(metadataCsvData.get(0).get(0));
-    }
 
     public void replaceGames(List<GameHistory> games) {
         List<String> headers = List.of("gameId", "creationDate", "p1Token", "p2Token", "state", "p1State", "p2state");
@@ -118,14 +112,6 @@ public class FileSystemAccess {
         }
         replaceCsv(TEMPLATE_FILENAME, headers, data);
     }
-
-    public void replaceMetadata(String now) {
-        List<String> headers = List.of("lastRun");
-        List<List<String>> data = new ArrayList<>();
-        data.add(List.of(now));
-        replaceCsv(METADATA_FILENAME, headers, data);
-    }
-
 
     @SneakyThrows(value = IOException.class)
     private void replaceCsv(String fileName, List<String> headers, List<List<String>> data) {

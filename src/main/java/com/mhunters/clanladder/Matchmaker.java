@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class Matchmaker {
 
-    private static final String GAME_NAME = "M'Hunters Auto Game";
+    private static final String GAME_NAME = "M'Hunters Ladder Game";
     private static final String TEAM = "None";
 
 
