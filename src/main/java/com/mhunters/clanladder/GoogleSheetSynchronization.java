@@ -109,7 +109,7 @@ public class GoogleSheetSynchronization {
             } else {
                 Player newPlayer = new Player(googleSheetSignup.getName(), googleSheetSignup.getToken(),
                         googleSheetSignup.getMaxGames(),
-                        INITIAL_ELO, 0, 0);
+                        INITIAL_ELO, 0);
                 updatedPlayers.add(newPlayer);
             }
         }
@@ -125,7 +125,7 @@ public class GoogleSheetSynchronization {
          * Step 1: Delete the old rankings
          * Step 2: Insert the new rankings
          */
-        
+
         googleSheetAccess.deleteRankings();
 
         List<Player> players = fileSystemAccess.loadPlayers();

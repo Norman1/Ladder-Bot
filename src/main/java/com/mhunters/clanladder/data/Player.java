@@ -13,5 +13,4 @@ public class Player {
     private int maxGames;
     private int elo;
     private int currentGameCount;
-    private int newlyAssignedGames;
 }

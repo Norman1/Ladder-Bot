@@ -113,7 +113,7 @@ public class Matchmaker {
     }
 
 
-    private List<GameAssignment> assignGames(List<Player> players, List<Template> templates) {
+    List<GameAssignment> assignGames(List<Player> players, List<Template> templates) {
         List<GameAssignment> gameAssignments = new ArrayList<>();
         List<Player> eligiblePlayers = getEligiblePlayers(players);
         while (eligiblePlayers.size() >= 2) {
@@ -131,7 +131,7 @@ public class Matchmaker {
     }
 
     private List<Player> getEligiblePlayers(List<Player> players) {
-        return players.stream().filter(p -> p.getMaxGames() > p.getCurrentGameCount() + p.getNewlyAssignedGames()).collect(Collectors.toList());
+        return players.stream().filter(p -> p.getMaxGames() > p.getCurrentGameCount()).collect(Collectors.toList());
     }
 
     private Player chooseRandomPlayer(List<Player> players) {
