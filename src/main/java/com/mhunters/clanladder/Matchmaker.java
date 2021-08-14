@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class Matchmaker {
 
-    private static final String GAME_NAME = "M'Hunters Ladder Game";
     private static final String TEAM = "None";
 
 
@@ -78,13 +77,15 @@ public class Matchmaker {
     }
 
     private List<GameCreationRequest> createGameCreationRequests(List<GameAssignment> gameAssignments) {
+        //    private static final String GAME_NAME = "M'Hunters Ladder Game";
+
         List<GameCreationRequest> gameCreationRequests = new ArrayList<>();
         for (GameAssignment gameAssignment : gameAssignments) {
             GameCreationRequest gameCreationRequest = new GameCreationRequest();
             gameCreationRequest.setHostEmail(hostEmail);
             gameCreationRequest.setHostApiToken(hostApiToken);
             gameCreationRequest.setTemplateId(gameAssignment.getTemplateId());
-            gameCreationRequest.setGameName(GAME_NAME);
+            gameCreationRequest.setGameName(generateGameName(gameCreationRequest.getTemplateId()));
             gameCreationRequest.setPersonalMessage(generatePersonalMessage(gameAssignment));
             GameCreationRequest.Player p1 = new GameCreationRequest.Player(gameAssignment.getPlayer1Token(), TEAM);
             GameCreationRequest.Player p2 = new GameCreationRequest.Player(gameAssignment.getPlayer2Token(), TEAM);
@@ -92,6 +93,12 @@ public class Matchmaker {
             gameCreationRequests.add(gameCreationRequest);
         }
         return gameCreationRequests;
+    }
+
+    private String generateGameName(int templateId) {
+        String templateName = dataSynchronizer.getAllTemplates().stream().filter(t -> t.getId() == templateId).findAny().get().getName();
+        String out = "M'Hunters Ladder Game [" + templateName + "]";
+        return out;
     }
 
     private String generatePersonalMessage(GameAssignment gameAssignment) {
