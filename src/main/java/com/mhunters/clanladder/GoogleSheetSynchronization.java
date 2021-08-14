@@ -181,7 +181,9 @@ public class GoogleSheetSynchronization {
             googleSheetGames.add(gss);
         }
 
-        googleSheetAccess.insertGameHistory(googleSheetGames);
+        if (googleSheetGames.size() > 0) {
+            googleSheetAccess.insertGameHistory(googleSheetGames);
+        }
     }
 
 
