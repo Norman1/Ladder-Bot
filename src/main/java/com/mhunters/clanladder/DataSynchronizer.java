@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DataSynchronizer {
 
-    private static final int MAX_DAYS_IN_LOBBY = 1;
+    private static final int MAX_DAYS_IN_LOBBY = 2;
 
     @Getter
     private List<Template> allTemplates;
@@ -107,7 +107,7 @@ public class DataSynchronizer {
         deleteDeadGames();
         writeGamesBackToFileSystem();
         writePlayersBackToFileSystem();
-        
+
         googleSheetSynchronization.synchronizeGoogleSheet();
     }
 

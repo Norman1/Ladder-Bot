@@ -1,5 +1,6 @@
 package com.mhunters.clanladder.external;
 
+import com.mhunters.clanladder.data.googlesheet.GoogleSheetGame;
 import com.mhunters.clanladder.data.googlesheet.GoogleSheetRanking;
 import com.mhunters.clanladder.data.googlesheet.GoogleSheetSignup;
 import com.mhunters.clanladder.data.googlesheet.GoogleSheetTemplate;
@@ -21,6 +22,7 @@ public class GoogleSheetAccess {
     private static final String SIGNUP_PATH = BASE_PATH + "Signup";
     private static final String RANKINGS_DELETION_PATH = BASE_PATH + "Rankings/Rank/*";
     private static final String RANKINGS_POST_PATH = BASE_PATH + "Rankings";
+    private static final String GAMES_PATH = BASE_PATH + "Games";
 
     public List<GoogleSheetTemplate> readTemplates() {
         RestTemplate restTemplate = new RestTemplate();
@@ -50,6 +52,11 @@ public class GoogleSheetAccess {
     public void insertRankings(List<GoogleSheetRanking> googleSheetRankings) {
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.postForLocation(RANKINGS_POST_PATH, googleSheetRankings);
+    }
+
+    public void insertGameHistory(List<GoogleSheetGame> googleSheetGames) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.postForLocation(GAMES_PATH, googleSheetGames);
     }
 
 

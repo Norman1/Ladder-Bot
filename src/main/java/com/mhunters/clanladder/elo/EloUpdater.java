@@ -43,6 +43,12 @@ public class EloUpdater {
             Player p1 = p1Optional.get();
             Player p2 = p2Optional.get();
             WinState p1WinState = calculateWinState(game);
+
+            // For the Google Sheet (hack)
+            game.getSheetReportInfo().setPlayer1Name(p1.getName());
+            game.getSheetReportInfo().setPlayer2Name(p2.getName());
+            game.getSheetReportInfo().setResult(p1WinState.toString());
+
             int p1Rating = p1.getElo();
             int p2Rating = p2.getElo();
             int updatedP1Rating;

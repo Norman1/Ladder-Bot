@@ -16,4 +16,15 @@ public class GameHistory {
     private String state;
     private String p1State;
     private String p2State;
+    private SheetReportInfo sheetReportInfo = new SheetReportInfo();
+
+    @Data
+    public static class SheetReportInfo {
+        private String player1Name;
+        private String player2Name;
+        private String result;
+    }
+
 }
+
+

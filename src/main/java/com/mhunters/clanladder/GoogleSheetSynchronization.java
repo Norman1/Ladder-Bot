@@ -1,7 +1,9 @@
 package com.mhunters.clanladder;
 
+import com.mhunters.clanladder.data.GameHistory;
 import com.mhunters.clanladder.data.Player;
 import com.mhunters.clanladder.data.Template;
+import com.mhunters.clanladder.data.googlesheet.GoogleSheetGame;
 import com.mhunters.clanladder.data.googlesheet.GoogleSheetRanking;
 import com.mhunters.clanladder.data.googlesheet.GoogleSheetSignup;
 import com.mhunters.clanladder.data.googlesheet.GoogleSheetTemplate;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,11 +40,17 @@ public class GoogleSheetSynchronization {
     @Value("${googleSheetRankingSynchronizationEnabled}")
     private boolean googleSheetRankingSynchronizationEnabled;
 
+    @Value("${googleSheetGameInsertEnabled}")
+    private boolean googleSheetGameInsertEnabled;
+
     @Autowired
     private GoogleSheetAccess googleSheetAccess;
 
     @Autowired
     private FileSystemAccess fileSystemAccess;
+
+    @Autowired
+    private DataSynchronizer dataSynchronizer;
 
     /**
      * Fetches data from Google Sheets and writes it to the file system.
@@ -58,12 +67,14 @@ public class GoogleSheetSynchronization {
     }
 
     /**
-     * Fetches data from the file system and updates the Google Sheets.
+     * Updates the Google Sheets.
      * - File system rankings --> Google Sheet rankings
+     * - Insert the newly completed games into the Google Sheet
      */
     public void synchronizeGoogleSheet() {
         try {
             synchronizeRankings();
+            insertNewlyCompletedGames();
         } catch (Exception ex) {
             log.error("synchronizeGoogleSheet failed", ex);
         }
@@ -142,6 +153,35 @@ public class GoogleSheetSynchronization {
             googleSheetRankings.add(googleSheetRanking);
         }
         googleSheetAccess.insertRankings(googleSheetRankings);
+    }
+
+    private void insertNewlyCompletedGames() {
+        if (!googleSheetGameInsertEnabled) {
+            return;
+        }
+
+        List<GameHistory> newlyFinishedGames = dataSynchronizer.getNewlyFinishedGames();
+        List<GameHistory> deadOurOutdatedGames = dataSynchronizer.getDeadOrOutdatedGames();
+        List<GameHistory> allConsideredGames = new ArrayList<>();
+        allConsideredGames.addAll(newlyFinishedGames);
+        allConsideredGames.addAll(deadOurOutdatedGames);
+
+        List<GoogleSheetGame> googleSheetGames = new ArrayList<>();
+        for (GameHistory gameHistory : allConsideredGames) {
+            GoogleSheetGame gss = new GoogleSheetGame();
+            gss.setReportDate(LocalDate.now().toString());
+            gss.setPlayer1Name(gameHistory.getSheetReportInfo().getPlayer1Name());
+            gss.setPlayer2Name(gameHistory.getSheetReportInfo().getPlayer2Name());
+            gss.setResult(gameHistory.getSheetReportInfo().getResult());
+            if (deadOurOutdatedGames.contains(gameHistory)) {
+                gss.setLink("Deleted game");
+            } else {
+                gss.setLink("https://www.warzone.com/MultiPlayer?GameID=" + gameHistory.getGameId());
+            }
+            googleSheetGames.add(gss);
+        }
+
+        googleSheetAccess.insertGameHistory(googleSheetGames);
     }
 
 
