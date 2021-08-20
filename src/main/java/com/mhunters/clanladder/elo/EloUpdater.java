@@ -78,13 +78,13 @@ public class EloUpdater {
         boolean p1FailedToJoin = p1State.equals("Invited") || p1State.equals("Declined");
         boolean p2FailedToJoin = p2State.equals("Invited") || p2State.equals("Declined");
 
-        if (p1State.equals("EndedByVote") || (p1FailedToJoin && p2FailedToJoin)) {
+        if (p1State.equals("EndedByVote") || p1FailedToJoin || p2FailedToJoin) {
             return WinState.DRAW;
         }
-        if (p1State.equals("Won") || p2FailedToJoin) {
+        if (p1State.equals("Won")) {
             return WinState.VICTORY;
         }
-        if (p2State.equals("Won") || p1FailedToJoin) {
+        if (p2State.equals("Won")) {
             return WinState.DEFEAT;
         }
         // not supposed to happen
