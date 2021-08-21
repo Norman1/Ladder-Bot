@@ -1,6 +1,11 @@
 package com.mhunters.clanladder;
 
-import com.mhunters.clanladder.data.*;
+import com.mhunters.clanladder.data.GameAssignment;
+import com.mhunters.clanladder.data.GameHistory;
+import com.mhunters.clanladder.data.Player;
+import com.mhunters.clanladder.data.Template;
+import com.mhunters.clanladder.data.warzone.GameCreationRequest;
+import com.mhunters.clanladder.data.warzone.GameCreationResponse;
 import com.mhunters.clanladder.external.WarzoneAccess;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

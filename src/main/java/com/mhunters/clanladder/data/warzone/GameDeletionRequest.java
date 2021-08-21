@@ -1,9 +1,12 @@
-package com.mhunters.clanladder.data;
+package com.mhunters.clanladder.data.warzone;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+/**
+ * Request object for calling the Warzone game deletion API.
+ */
 @Data
 @AllArgsConstructor
 public class GameDeletionRequest {

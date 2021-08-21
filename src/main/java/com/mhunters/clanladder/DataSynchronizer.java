@@ -1,6 +1,10 @@
 package com.mhunters.clanladder;
 
-import com.mhunters.clanladder.data.*;
+import com.mhunters.clanladder.data.GameHistory;
+import com.mhunters.clanladder.data.Player;
+import com.mhunters.clanladder.data.Template;
+import com.mhunters.clanladder.data.warzone.GameDeletionRequest;
+import com.mhunters.clanladder.data.warzone.GameQueryResponse;
 import com.mhunters.clanladder.elo.EloUpdater;
 import com.mhunters.clanladder.external.FileSystemAccess;
 import com.mhunters.clanladder.external.WarzoneAccess;

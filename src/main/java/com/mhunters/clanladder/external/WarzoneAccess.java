@@ -1,6 +1,6 @@
 package com.mhunters.clanladder.external;
 
-import com.mhunters.clanladder.data.*;
+import com.mhunters.clanladder.data.warzone.*;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
