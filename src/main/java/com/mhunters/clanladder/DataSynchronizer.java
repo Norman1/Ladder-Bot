@@ -53,6 +53,11 @@ public class DataSynchronizer {
     @Setter
     private List<GameHistory> newlyCreatedGames;
 
+    // TODO use to calculate a better matchmaking (together with deadOrOutdatedGames + newlyFinishedGames)
+    // Games which were played in the past and were already completed before this run
+    @Getter
+    private List<GameHistory> historicGames;
+
     @Autowired
     private FileSystemAccess fileSystemAccess;
 
@@ -84,12 +89,14 @@ public class DataSynchronizer {
          * Step 1: Synchronize the file system data with Google Sheets.
          * Step 2: Load the templates from the file system.
          * Step 3: Load the games from the file system. Check the state of the ongoing games and update the information accordingly.
+         * Step 3.1: Load the historic games from the file system.
          * Step 4: Load the players from the file system and inject the information regarding their ongoing games.
          * Step 5: Update the players Elo ratings.
          */
         googleSheetSynchronization.synchronizeFileSystemData();
         synchronizeTemplates();
         synchronizeGames();
+        loadHistoricGames();
         synchronizePlayers();
         updateEloRatings();
     }
@@ -102,7 +109,8 @@ public class DataSynchronizer {
         /*
          * 1:
          * - Tell Warzone to delete all dead games.
-         * - Collect all non dead games and write them to the file system. We do not write historic games currently.
+         * - Collect all non dead games and write them to the file system.
+         * - Write the completed games separately back to the file system
          * - Write the players back to the file system.
          * - Write the templates back to the file system.
          * 2:
@@ -110,6 +118,7 @@ public class DataSynchronizer {
          */
         deleteDeadGames();
         writeGamesBackToFileSystem();
+        writeHistoricGamesBackToFileSystem();
         writePlayersBackToFileSystem();
 
         googleSheetSynchronization.synchronizeGoogleSheet();
@@ -120,6 +129,7 @@ public class DataSynchronizer {
     private void synchronizeTemplates() {
         allTemplates = fileSystemAccess.loadTemplates();
     }
+
 
     // Step 2
     private void synchronizeGames() {
@@ -152,6 +162,10 @@ public class DataSynchronizer {
                 }
             }
         }
+    }
+
+    private void loadHistoricGames() {
+        historicGames = fileSystemAccess.loadHistoricGames();
     }
 
     private GameState getGameState(GameHistory gameHistory) {
@@ -234,6 +248,17 @@ public class DataSynchronizer {
         gamesToKeepSaved.addAll(ongoingGames);
         gamesToKeepSaved.addAll(newlyCreatedGames);
         fileSystemAccess.replaceGames(gamesToKeepSaved);
+    }
+
+    private void writeHistoricGamesBackToFileSystem() {
+        // side effect here, the game ID is not present any longer
+        deadOrOutdatedGames.stream().forEach(game -> game.setGameId(-1));
+
+        List<GameHistory> historicGamesToKeepSaved = new ArrayList<>();
+        historicGamesToKeepSaved.addAll(deadOrOutdatedGames);
+        historicGamesToKeepSaved.addAll(newlyFinishedGames);
+//        historicGamesToKeepSaved.sort(Comparator.comparing(GameHistory::getCreationDate));
+        fileSystemAccess.addHistoricGames(historicGamesToKeepSaved);
     }
 
     private void writePlayersBackToFileSystem() {

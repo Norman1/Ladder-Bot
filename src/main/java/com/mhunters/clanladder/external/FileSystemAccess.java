@@ -28,6 +28,7 @@ public class FileSystemAccess {
     private static final String BASE_PATH = "D:/Files/nghood/Ladder-Bot/FileSystemData/";
     private static final String TEMPLATE_FILENAME = "Templates.csv";
     private static final String GAMES_FILENAME = "Games.csv";
+    private static final String HISTORIC_GAMES_FILENAME = "HistoricGames.csv";
     private static final String PLAYERBASE_FILENAME = "Playerbase.csv";
 
     public List<Player> loadPlayers() {
@@ -61,6 +62,25 @@ public class FileSystemAccess {
         return gameHistories;
     }
 
+    public List<GameHistory> loadHistoricGames() {
+        List<List<String>> gamesCsvData = loadCsv(HISTORIC_GAMES_FILENAME);
+        List<GameHistory> gameHistories = new ArrayList<>();
+        for (List<String> gameCsvData : gamesCsvData) {
+            GameHistory gameHistory = new GameHistory();
+            gameHistory.setGameId(Integer.parseInt(gameCsvData.get(0)));
+            gameHistory.setCreationDate(DateUtils.parseDate(gameCsvData.get(1)));
+            gameHistory.setP1Token(gameCsvData.get(2));
+            gameHistory.setP2Token(gameCsvData.get(3));
+            gameHistory.setState(gameCsvData.get(4));
+            gameHistory.setP1State(gameCsvData.get(5));
+            gameHistory.setP2State(gameCsvData.get(6));
+            gameHistories.add(gameHistory);
+        }
+        return gameHistories;
+    }
+
+
+
     public List<Template> loadTemplates() {
         List<List<String>> templatesCsvData = loadCsv(TEMPLATE_FILENAME);
         List<Template> templates = new ArrayList<>();
@@ -91,6 +111,20 @@ public class FileSystemAccess {
         replaceCsv(GAMES_FILENAME, headers, data);
     }
 
+    public void addHistoricGames(List<GameHistory> games) {
+        List<List<String>> data = new ArrayList<>();
+        for (GameHistory game : games) {
+            data.add(List.of(Integer.toString(game.getGameId()),
+                    DateUtils.format(game.getCreationDate()),
+                    game.getP1Token(),
+                    game.getP2Token(),
+                    game.getState(),
+                    game.getP1State(),
+                    game.getP2State()));
+        }
+        addToCsv(HISTORIC_GAMES_FILENAME, data);
+    }
+
     public void replacePlayers(List<Player> players) {
         List<String> headers = List.of("Name", "InviteToken", "MaxGames", "Elo");
         List<List<String>> data = new ArrayList<>();
@@ -113,6 +147,7 @@ public class FileSystemAccess {
         replaceCsv(TEMPLATE_FILENAME, headers, data);
     }
 
+
     @SneakyThrows(value = IOException.class)
     private void replaceCsv(String fileName, List<String> headers, List<List<String>> data) {
         File file = new File(BASE_PATH + fileName);
@@ -129,6 +164,23 @@ public class FileSystemAccess {
             csvPrinter.flush();
         }
     }
+
+    @SneakyThrows(value = IOException.class)
+    private void addToCsv(String fileName, List<List<String>> data) {
+        File file = new File(BASE_PATH + fileName);
+        FileWriter fw = new FileWriter(file, true);
+        CSVPrinter csvPrinter = new CSVPrinter(fw, CSVFormat.DEFAULT);
+        try {
+            for (List<String> row : data) {
+                String[] insertRow = row.toArray(String[]::new);
+                csvPrinter.printRecord(insertRow);
+            }
+        } finally {
+            fw.flush();
+            csvPrinter.flush();
+        }
+    }
+
 
     @SneakyThrows(value = IOException.class)
     private List<List<String>> loadCsv(String fileName) {

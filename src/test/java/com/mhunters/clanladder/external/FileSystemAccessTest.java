@@ -50,5 +50,14 @@ public class FileSystemAccessTest {
         Assertions.assertTrue(games2.size() > 0);
     }
 
+    @Test
+    void addHistoricGamesTest() {
+        List<GameHistory> games = fileSystemAccess.loadGames();
+        games = games.subList(0,2);
+        fileSystemAccess.addHistoricGames(games);
+        fileSystemAccess.addHistoricGames(games);
+        fileSystemAccess.addHistoricGames(games);
+    }
+
 
 }
