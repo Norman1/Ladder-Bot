@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +31,9 @@ public class Matchmaker {
 
     @Autowired
     private DataSynchronizer dataSynchronizer;
+
+    @Autowired
+    private GameAssignmentCalculator gameAssignmentCalculator;
 
     @Value("${hostEmail}")
     private String hostEmail;
@@ -58,7 +60,7 @@ public class Matchmaker {
     private void executeMatchMaking() {
         List<Player> players = dataSynchronizer.getAllPlayers();
         List<Template> templates = dataSynchronizer.getAllTemplates();
-        List<GameAssignment> gameAssignments = assignGames(players, templates);
+        List<GameAssignment> gameAssignments = gameAssignmentCalculator.assignGames(players, templates);
         List<GameCreationRequest> gameCreationRequests = createGameCreationRequests(gameAssignments);
         List<GameHistory> createdGames = new ArrayList<>();
         for (GameCreationRequest gameCreationRequest : gameCreationRequests) {
@@ -66,6 +68,7 @@ public class Matchmaker {
             // The game could not get created
             if (gameCreationResponse.getGameId() == 0) {
                 log.warn("Failed game creation: " + gameCreationRequest);
+                log.warn("Error message: "+gameCreationResponse.getError());
                 continue;
             }
             GameHistory gameHistory = new GameHistory();
@@ -123,38 +126,5 @@ public class Matchmaker {
         out += "Contender 2: " + contender2.getName() + " (Rank " + rankP2 + " with a rating of " + contender2.getElo() + ")";
         return out;
     }
-
-
-    List<GameAssignment> assignGames(List<Player> players, List<Template> templates) {
-        List<GameAssignment> gameAssignments = new ArrayList<>();
-        List<Player> eligiblePlayers = getEligiblePlayers(players);
-        while (eligiblePlayers.size() >= 2) {
-            Player p1 = chooseRandomPlayer(eligiblePlayers);
-            p1.setCurrentGameCount(p1.getCurrentGameCount() + 1);
-            eligiblePlayers.remove(p1);
-            Player p2 = chooseRandomPlayer(eligiblePlayers);
-            p2.setCurrentGameCount(p2.getCurrentGameCount() + 1);
-            Template template = chooseRandomTemplate(templates);
-            GameAssignment gameAssignment = new GameAssignment(template.getId(), p1.getInviteToken(), p2.getInviteToken());
-            gameAssignments.add(gameAssignment);
-            eligiblePlayers = getEligiblePlayers(players);
-        }
-        return gameAssignments;
-    }
-
-    private List<Player> getEligiblePlayers(List<Player> players) {
-        return players.stream().filter(p -> p.getMaxGames() > p.getCurrentGameCount()).collect(Collectors.toList());
-    }
-
-    private Player chooseRandomPlayer(List<Player> players) {
-        Random random = new Random();
-        return players.get(random.nextInt(players.size()));
-    }
-
-    private Template chooseRandomTemplate(List<Template> templates) {
-        Random random = new Random();
-        return templates.get(random.nextInt(templates.size()));
-    }
-
 
 }

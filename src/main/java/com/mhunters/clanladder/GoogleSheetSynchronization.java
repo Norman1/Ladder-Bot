@@ -15,10 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,7 +26,7 @@ import java.util.stream.Collectors;
 public class GoogleSheetSynchronization {
 
     private static final int INITIAL_ELO = 1000;
-    private static final int MAX_GAMES = 3;
+    private static final int MAX_GAMES = 5;
 
     @Value("${googleSheetTemplateLoadingEnabled}")
     private boolean googleSheetTemplateLoadingEnabled;
@@ -165,11 +162,12 @@ public class GoogleSheetSynchronization {
         List<GameHistory> allConsideredGames = new ArrayList<>();
         allConsideredGames.addAll(newlyFinishedGames);
         allConsideredGames.addAll(deadOurOutdatedGames);
-
+        allConsideredGames.sort(Comparator.comparing(GameHistory::getLastTurnDate));
         List<GoogleSheetGame> googleSheetGames = new ArrayList<>();
         for (GameHistory gameHistory : allConsideredGames) {
             GoogleSheetGame gss = new GoogleSheetGame();
             gss.setReportDate(LocalDate.now().toString());
+            gss.setTemplate(getTemplateName(gameHistory.getTemplateId()));
             gss.setPlayer1Name(gameHistory.getSheetReportInfo().getPlayer1Name());
             gss.setPlayer2Name(gameHistory.getSheetReportInfo().getPlayer2Name());
             gss.setResult(gameHistory.getSheetReportInfo().getResult());
@@ -184,6 +182,15 @@ public class GoogleSheetSynchronization {
         if (googleSheetGames.size() > 0) {
             googleSheetAccess.insertGameHistory(googleSheetGames);
         }
+    }
+
+    private String getTemplateName(int templateId) {
+        List<Template> templates = dataSynchronizer.getAllTemplates();
+        Optional<Template> templateOptional = templates.stream().filter(t -> t.getId() == templateId).findAny();
+        if(templateOptional.isPresent()){
+            return templateOptional.get().getName();
+        }
+        return "Unknown";
     }
 
 

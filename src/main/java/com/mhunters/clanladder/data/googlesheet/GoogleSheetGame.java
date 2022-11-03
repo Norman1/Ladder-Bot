@@ -9,6 +9,9 @@ public class GoogleSheetGame {
     @JsonProperty("Report Date")
     private String reportDate;
 
+    @JsonProperty("Template")
+    private String template;
+
     @JsonProperty("Player 1")
     private String player1Name;
 

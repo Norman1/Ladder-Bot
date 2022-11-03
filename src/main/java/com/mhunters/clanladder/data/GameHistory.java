@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 public class GameHistory {
     private int gameId;
     private LocalDateTime creationDate;
+    private LocalDateTime lastTurnDate;
+    private int templateId;
     private String p1Token;
     private String p2Token;
     private String state;
@@ -24,7 +26,5 @@ public class GameHistory {
         private String player2Name;
         private String result;
     }
-
 }
-
 

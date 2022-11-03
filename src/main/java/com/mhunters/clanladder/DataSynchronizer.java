@@ -194,14 +194,17 @@ public class DataSynchronizer {
 
     private GameHistory queryWarzoneGame(int gameId) {
         GameQueryResponse gameQueryResponse = warzoneAccess.readGame(gameId, hostEmail, hostApiToken);
-        // state = null when the game is deleted
+
         GameHistory gameHistory = new GameHistory();
         gameHistory.setGameId(gameId);
-        if (gameQueryResponse.getState() == null) {
+        if (gameQueryResponse.getError() != null) {
+            log.warn(gameQueryResponse.getError());
             return gameHistory;
         }
         gameHistory.setState(gameQueryResponse.getState());
         gameHistory.setCreationDate(DateUtils.parseDate(gameQueryResponse.getCreated()));
+        gameHistory.setLastTurnDate(DateUtils.parseDate(gameQueryResponse.getLastTurnTime()));
+        gameHistory.setTemplateId(gameQueryResponse.getTemplateId());
         List<GameQueryResponse.GamePlayerQueryResponse> players = gameQueryResponse.getPlayers();
         gameHistory.setP1Token(players.get(0).getId());
         gameHistory.setP1State(players.get(0).getState());

@@ -7,10 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -32,6 +29,7 @@ public class EloUpdater {
         List<GameHistory> allConsideredGames = new ArrayList<>();
         allConsideredGames.addAll(newlyFinishedGames);
         allConsideredGames.addAll(deadOrOutdatedGames);
+        allConsideredGames.sort(Comparator.comparing(GameHistory::getLastTurnDate));
         for (GameHistory game : allConsideredGames) {
             Optional<Player> p1Optional = players.stream().filter(p -> p.getInviteToken().equals(game.getP1Token())).findAny();
             Optional<Player> p2Optional = players.stream().filter(p -> p.getInviteToken().equals(game.getP2Token())).findAny();

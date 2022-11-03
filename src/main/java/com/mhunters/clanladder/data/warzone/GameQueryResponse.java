@@ -26,5 +26,4 @@ public class GameQueryResponse {
         private String name;
         private String state;
     }
-
 }
