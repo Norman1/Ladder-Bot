@@ -217,7 +217,7 @@ public class GoogleSheetSynchronization {
         if (!playerFailedToJoin) {
             return "";
         }
-        String out = playerName + " ";
+        String out = playerName;
         if (playerState.equals("Invited")) {
             out += " did not accept the invite";
         } else if (playerState.equals("Declined")) {
