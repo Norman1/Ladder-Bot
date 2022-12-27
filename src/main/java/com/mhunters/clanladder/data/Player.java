@@ -13,4 +13,6 @@ public class Player {
     private int maxGames;
     private int elo;
     private int currentGameCount;
+    // true if the player had assigned games but failed to join any of them
+    private boolean isAllGamesDenier;
 }

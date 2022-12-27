@@ -1,7 +1,6 @@
 package com.mhunters.clanladder;
 
 import com.mhunters.clanladder.data.GameAssignment;
-import com.mhunters.clanladder.data.GameHistory;
 import com.mhunters.clanladder.data.Player;
 import com.mhunters.clanladder.data.Template;
 import lombok.extern.slf4j.Slf4j;
@@ -9,11 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-// TODO weiter
 
 /**
  * This class is responsible for finding optimal game assignments.
@@ -39,9 +36,7 @@ public class GameAssignmentCalculator {
             Player p1 = chooseBestFirstPlayer(eligiblePlayers);
             p1.setCurrentGameCount(p1.getCurrentGameCount() + 1);
             eligiblePlayers.remove(p1);
-
-            // TODO weiter
-            Player p2 = chooseRandomPlayer(eligiblePlayers);
+            Player p2 = chooseBestSecondPlayer(eligiblePlayers);
             p2.setCurrentGameCount(p2.getCurrentGameCount() + 1);
             Template template = chooseRandomTemplate(templates);
             GameAssignment gameAssignment = new GameAssignment(template.getId(), p1.getInviteToken(), p2.getInviteToken());
@@ -53,30 +48,28 @@ public class GameAssignmentCalculator {
 
     // Step 1
     private Player chooseBestFirstPlayer(List<Player> eligiblePlayers) {
+        // If there are players who decline their games, we assign them first.
+        List<Player> decliningPlayers = eligiblePlayers.stream().filter(p -> p.isAllGamesDenier()).collect(Collectors.toList());
+        if (decliningPlayers.size() > 0) {
+            return chooseRandomPlayer(decliningPlayers);
+        }
+
         // We prefer to assign players with the most non assigned games first
         eligiblePlayers.sort((p1, p2) -> getUnassignedGames(p2) - getUnassignedGames(p1));
-        int bestPlayerMissingArmies = getUnassignedGames(eligiblePlayers.get(0));
-        List<Player> bestPlayers = eligiblePlayers.stream().filter(p -> getUnassignedGames(p) == bestPlayerMissingArmies).collect(Collectors.toList());
+        int bestPlayerMissingGames = getUnassignedGames(eligiblePlayers.get(0));
+        List<Player> bestPlayers = eligiblePlayers.stream().filter(p -> getUnassignedGames(p) == bestPlayerMissingGames).collect(Collectors.toList());
         Player randomBestPlayer = chooseRandomPlayer(bestPlayers);
         return randomBestPlayer;
     }
 
-    // Step 2
-    private Player chooseBestSecondPlayer(List<Player> eligiblePlayers, Player firstPlayer) {
-        List<GameHistory> gamesToConsider = new ArrayList<>();
-        gamesToConsider.addAll(dataSynchronizer.getHistoricGames());
-        gamesToConsider.addAll(dataSynchronizer.getNewlyFinishedGames());
-        String token = firstPlayer.getInviteToken();
-        gamesToConsider = gamesToConsider.stream().filter(
-                game -> game.getP1Token().equals(firstPlayer.getInviteToken())
-                        || game.getP2Token().equals(firstPlayer.getInviteToken())).collect(Collectors.toList());
-        Collections.shuffle(eligiblePlayers);
-
-// TODO weiter
-        return null;
+    private Player chooseBestSecondPlayer(List<Player> eligiblePlayers) {
+        // If there are players who decline their games, we assign them first.
+        List<Player> decliningPlayers = eligiblePlayers.stream().filter(p -> p.isAllGamesDenier()).collect(Collectors.toList());
+        if (decliningPlayers.size() > 0) {
+            return chooseRandomPlayer(decliningPlayers);
+        }
+        return chooseRandomPlayer(eligiblePlayers);
     }
-
-
 
 
     private int getUnassignedGames(Player player) {

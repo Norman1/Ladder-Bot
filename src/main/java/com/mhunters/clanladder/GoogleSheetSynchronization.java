@@ -117,7 +117,7 @@ public class GoogleSheetSynchronization {
             } else {
                 Player newPlayer = new Player(googleSheetSignup.getName(), googleSheetSignup.getToken(),
                         googleSheetSignup.getMaxGames(),
-                        INITIAL_ELO, 0);
+                        INITIAL_ELO, 0, false);
                 updatedPlayers.add(newPlayer);
             }
         }
@@ -158,10 +158,14 @@ public class GoogleSheetSynchronization {
         }
 
         List<GameHistory> newlyFinishedGames = dataSynchronizer.getNewlyFinishedGames();
-        List<GameHistory> deadOurOutdatedGames = dataSynchronizer.getDeadOrOutdatedGames();
+        List<GameHistory> deadOrOutdatedGames = dataSynchronizer.getDeadOrOutdatedGames();
         List<GameHistory> allConsideredGames = new ArrayList<>();
         allConsideredGames.addAll(newlyFinishedGames);
-        allConsideredGames.addAll(deadOurOutdatedGames);
+        allConsideredGames.addAll(deadOrOutdatedGames);
+
+        // remove games which do not count due to one player having left the clan
+        allConsideredGames.removeIf(game -> game.getSheetReportInfo().getResult() == null);
+
         allConsideredGames.sort(Comparator.comparing(GameHistory::getLastTurnDate));
         List<GoogleSheetGame> googleSheetGames = new ArrayList<>();
         for (GameHistory gameHistory : allConsideredGames) {
@@ -171,11 +175,7 @@ public class GoogleSheetSynchronization {
             gss.setPlayer1Name(gameHistory.getSheetReportInfo().getPlayer1Name());
             gss.setPlayer2Name(gameHistory.getSheetReportInfo().getPlayer2Name());
             gss.setResult(gameHistory.getSheetReportInfo().getResult());
-            if (deadOurOutdatedGames.contains(gameHistory)) {
-                gss.setLink("Deleted game");
-            } else {
-                gss.setLink("https://www.warzone.com/MultiPlayer?GameID=" + gameHistory.getGameId());
-            }
+            gss.setLink(getGameLinkColumn(gameHistory, deadOrOutdatedGames));
             googleSheetGames.add(gss);
         }
 
@@ -184,10 +184,53 @@ public class GoogleSheetSynchronization {
         }
     }
 
+    // "Link" column in the Google sheet, containing the game link or an explanation why there is none.
+    private String getGameLinkColumn(GameHistory gameHistory, List<GameHistory> deadOrOutdatedGames) {
+
+        if (!deadOrOutdatedGames.contains(gameHistory)) {
+            return "https://www.warzone.com/MultiPlayer?GameID=" + gameHistory.getGameId();
+        }
+        String player1Name = gameHistory.getSheetReportInfo().getPlayer1Name();
+        String player2Name = gameHistory.getSheetReportInfo().getPlayer2Name();
+
+        String p1State = gameHistory.getP1State();
+        String p2State = gameHistory.getP2State();
+
+        String p1Message = getPlayerMessage(player1Name, p1State);
+        String p2Message = getPlayerMessage(player2Name, p2State);
+
+
+        String outMessage = "Deleted game (";
+        outMessage += p1Message;
+        if (!p1Message.isEmpty() && !p2Message.isEmpty()) {
+            outMessage += " and ";
+        }
+        outMessage += p2Message;
+        outMessage += ")";
+
+
+        return outMessage;
+    }
+
+    private String getPlayerMessage(String playerName, String playerState) {
+        boolean playerFailedToJoin = playerState.equals("Invited") || playerState.equals("Declined");
+        if (!playerFailedToJoin) {
+            return "";
+        }
+        String out = playerName + " ";
+        if (playerState.equals("Invited")) {
+            out += " did not accept the invite";
+        } else if (playerState.equals("Declined")) {
+            out += " declined the invite";
+        }
+        return out;
+    }
+
+
     private String getTemplateName(int templateId) {
         List<Template> templates = dataSynchronizer.getAllTemplates();
         Optional<Template> templateOptional = templates.stream().filter(t -> t.getId() == templateId).findAny();
-        if(templateOptional.isPresent()){
+        if (templateOptional.isPresent()) {
             return templateOptional.get().getName();
         }
         return "Unknown";

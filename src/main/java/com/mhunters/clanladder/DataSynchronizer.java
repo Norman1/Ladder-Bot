@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -77,6 +78,17 @@ public class DataSynchronizer {
 
     private enum GameState {
         LOBBY_OK, LOBBY_DEAD_OR_OUTDATED, ONGOING, FINISHED, NOT_FINDABLE
+    }
+
+    // TODO debug test
+    public static void main(String... args) {
+        DataSynchronizer d = new DataSynchronizer();
+        d.fileSystemAccess = new FileSystemAccess();
+        //   d.synchronizeGames();
+        d.loadHistoricGames();
+        // d.synchronizePlayers();
+        d.allPlayers = d.fileSystemAccess.loadPlayers();
+        d.markAllGamesDeniers();
     }
 
 
@@ -213,8 +225,6 @@ public class DataSynchronizer {
         return gameHistory;
     }
 
-
-    // Step 3
     private void synchronizePlayers() {
         allPlayers = fileSystemAccess.loadPlayers();
 
@@ -231,6 +241,42 @@ public class DataSynchronizer {
                 }
             }
         }
+        markAllGamesDeniers();
+    }
+
+
+    private void markAllGamesDeniers() {
+        // We assume that an all games denier is someone who has failed to play in any of his last 5 assigned games.
+        for (Player player : allPlayers) {
+            String playerToken = player.getInviteToken();
+            List<GameHistory> involvedGames = historicGames.stream().filter(game -> game.getP1Token().equals(playerToken) || game.getP2Token().equals(playerToken)).collect(Collectors.toList());
+            Collections.reverse(involvedGames);
+            if (involvedGames.size() < 5) {
+                continue;
+            }
+
+            boolean hasAcceptedGame = false;
+            for (int i = 0; i < 5; i++) {
+                GameHistory historicGame = involvedGames.get(i);
+                boolean playerDeclinedGame = didPlayerDeclineGame(player, historicGame);
+                if (!playerDeclinedGame) {
+                    hasAcceptedGame = true;
+                }
+            }
+            player.setAllGamesDenier(!hasAcceptedGame);
+            if (!hasAcceptedGame) {
+                String name = player.getName();
+                log.debug("The player " + name + " has not accepted any of his last games.");
+            }
+        }
+    }
+
+    private boolean didPlayerDeclineGame(Player player, GameHistory game) {
+        // declined means that the player state is Declined or Invited
+        boolean p1Declined = game.getP1State().equals("Declined") || game.getP1State().equals("Invited");
+        boolean p2Declined = game.getP2State().equals("Declined") || game.getP2State().equals("Invited");
+        boolean isPlayerP1 = player.getInviteToken().equals(game.getP1Token());
+        return (isPlayerP1 && p1Declined) || (!isPlayerP1 && p2Declined);
     }
 
 

@@ -68,7 +68,7 @@ public class Matchmaker {
             // The game could not get created
             if (gameCreationResponse.getGameId() == 0) {
                 log.warn("Failed game creation: " + gameCreationRequest);
-                log.warn("Error message: "+gameCreationResponse.getError());
+                log.warn("Error message: " + gameCreationResponse.getError());
                 continue;
             }
             GameHistory gameHistory = new GameHistory();
@@ -123,7 +123,9 @@ public class Matchmaker {
         int rankP1 = allPlayingPlayers.indexOf(contender1) + 1;
         int rankP2 = allPlayingPlayers.indexOf(contender2) + 1;
         out += "Contender 1: " + contender1.getName() + " (Rank " + rankP1 + " with a rating of " + contender1.getElo() + ")\n";
-        out += "Contender 2: " + contender2.getName() + " (Rank " + rankP2 + " with a rating of " + contender2.getElo() + ")";
+        out += "Contender 2: " + contender2.getName() + " (Rank " + rankP2 + " with a rating of " + contender2.getElo() + ")\n\n";
+        out += "If your opponent declines or fails to join a game, please still accept the game to help the matchmaking algorithm to pair you in the future with opponents who play their games.\n";
+        out += "For more information visit our Discord: https://www.warzone.com/Discussion/?ID=473483";
         return out;
     }
 
