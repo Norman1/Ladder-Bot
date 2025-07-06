@@ -17,6 +17,7 @@ public class ClanladderApplication {
     @EventListener(ApplicationReadyEvent.class)
     public void runLadderOnStartup() {
         System.out.println("Hello World");
+        System.exit(0);
         // Replace with ladder logic later
     }
 
