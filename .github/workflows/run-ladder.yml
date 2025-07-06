@@ -22,7 +22,8 @@ jobs:
           java-version: '21'
 
       - name: Build the application (skip tests)
-        run: ./mvnw clean install -DskipTests=true
+        run: ./mvnw clean package -DskipTests=true
+
 
       - name: Run the application
         run: java -jar target/*.jar
