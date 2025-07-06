@@ -1,5 +1,5 @@
 ## private information ###
-**/application.properties
+#**/application.properties ## want it in for now, resolve later with real secrets
 **/Warzone.postman_collection.json
 **/FileSystemData/**
 
