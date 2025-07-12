@@ -10,7 +10,6 @@ import com.mhunters.clanladder.external.WarzoneAccess;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -39,12 +38,7 @@ public class Matchmaker {
     private String hostEmail;
     @Value("${hostApiToken}")
     private String hostApiToken;
-
-    /**
-     * This is the main method to trigger the whole matchmaking process. It automatically triggers once per day
-     * at 10pm.
-     */
-    @Scheduled(cron = "0 0 22 * * *")
+    
     public void executeProcess() {
         log.info("Called executeProcess");
         /*

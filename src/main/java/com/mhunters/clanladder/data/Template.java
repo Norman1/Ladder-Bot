@@ -7,4 +7,6 @@ public class Template {
     private String name;
     private String link;
     private int id;
+
+    
 }
