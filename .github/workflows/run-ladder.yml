@@ -21,7 +21,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Write credentials
+      - name: Write credentials file
         run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > /tmp/google-credentials.json
 
       - name: Build the application (skip tests)
@@ -29,4 +29,5 @@ jobs:
 
 
       - name: Run the application
-        run: java -jar target/*.jar
+        run: java -jar target/*.jar --google.credentials.file=/tmp/google-credentials.json
+
