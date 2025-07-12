@@ -11,21 +11,22 @@ import java.util.logging.Logger;
 @Service
 public class Orchestrator {
 
+    private final Logger logger = Logger.getLogger("Orchestrator");
     private final AccessGoogleService googleAccessService;
     private final CleanLadderService cleanLadderService;
+
 
     public Orchestrator(AccessGoogleService googleAccessService, CleanLadderService cleanLadderService) {
         this.googleAccessService = googleAccessService;
         this.cleanLadderService = cleanLadderService;
     }
 
-    private Logger logger = Logger.getLogger("Orchestrator");
-
     public void runAll() {
         logger.info("Called Orchestrator.runAll");
         DataWrapper dataWrapper = new DataWrapper();
         googleAccessService.reaadAllData(dataWrapper);
         cleanLadderService.cleanLadder(dataWrapper);
+
         googleAccessService.writeAllData(dataWrapper);
 
         logger.info("Orchestrator successfully ran through");

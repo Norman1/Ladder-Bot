@@ -6,6 +6,7 @@ import com.mhunters.clanladder.data.Player;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -24,9 +25,20 @@ public class CleanLadderService {
         logger.info("Called CleanLadderService.cleanLadder");
         removePlayersMissingInSignup(dataWrapper);
         addPlayersNewInSignup(dataWrapper);
+        orderLadderRankings(dataWrapper);
 
     }
 
+
+    private void orderLadderRankings(DataWrapper dataWrapper) {
+        List<LadderRanking> ladderRankings = dataWrapper.getLadderRankings();
+        ladderRankings.sort(Comparator.comparingInt(LadderRanking::getRating));
+        for (int i = 0; i < ladderRankings.size(); i++) {
+            LadderRanking ladderRanking = ladderRankings.get(i);
+            ladderRanking.setRank(i + 1);
+        }
+
+    }
 
     private void removePlayersMissingInSignup(DataWrapper dataWrapper) {
         List<Player> players = dataWrapper.getPlayers();
