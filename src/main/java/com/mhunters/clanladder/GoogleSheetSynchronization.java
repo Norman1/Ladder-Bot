@@ -9,6 +9,7 @@ import com.mhunters.clanladder.data.googlesheet.GoogleSheetSignup;
 import com.mhunters.clanladder.data.googlesheet.GoogleSheetTemplate;
 import com.mhunters.clanladder.external.FileSystemAccess;
 import com.mhunters.clanladder.external.GoogleSheetAccess;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -78,6 +79,7 @@ public class GoogleSheetSynchronization {
 
     }
 
+    @SneakyThrows
     private void synchronizeTemplates() {
         if (!googleSheetTemplateLoadingEnabled) {
             return;
@@ -94,6 +96,7 @@ public class GoogleSheetSynchronization {
 
     }
 
+    @SneakyThrows
     private void synchronizeSignup() {
         if (!googleSheetSignupSynchronizationEnabled) {
             return;
@@ -125,6 +128,7 @@ public class GoogleSheetSynchronization {
     }
 
 
+    @SneakyThrows
     private void synchronizeRankings() {
         if (!googleSheetRankingSynchronizationEnabled) {
             return;
@@ -152,6 +156,7 @@ public class GoogleSheetSynchronization {
         googleSheetAccess.insertRankings(googleSheetRankings);
     }
 
+    @SneakyThrows
     private void insertNewlyCompletedGames() {
         if (!googleSheetGameInsertEnabled) {
             return;

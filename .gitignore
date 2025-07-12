@@ -2,6 +2,7 @@
 #**/application.properties ## want it in for now, resolve later with real secrets
 **/Warzone.postman_collection.json
 **/FileSystemData/**
+src/main/resources/google-credentials.json
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider

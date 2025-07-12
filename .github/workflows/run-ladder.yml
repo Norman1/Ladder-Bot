@@ -21,6 +21,11 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Create google-credentials.json from secret
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.GOOGLE_CREDENTIALS }}" > src/main/resources/google-credentials.json
+
       - name: Build the application (skip tests)
         run: ./mvnw clean package -DskipTests=true
 
