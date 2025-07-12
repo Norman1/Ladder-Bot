@@ -21,8 +21,10 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Write credentials file
-        run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > /tmp/google-credentials.json
+      - name: Write credentials to /tmp
+        run: |
+          echo "${{ secrets.GOOGLE_CREDENTIALS_BASE64 }}" | base64 -d > /tmp/google-credentials.json
+
 
       - name: Build the application (skip tests)
         run: ./mvnw clean package -DskipTests=true
